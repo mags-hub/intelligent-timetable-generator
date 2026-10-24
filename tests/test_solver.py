@@ -4,9 +4,14 @@ import pytest
 TODO = "TODO Ticket 9"
 
 
-@pytest.mark.skip(reason=TODO)
 def test_load_problem_reads_seeded_data(db_path):
-    """loader.load_problem(db_path) -> 21 courses, 10 rooms, 35 non-break slots."""
+       """loader.load_problem(db_path) -> 21 courses, 10 rooms, 35 non-break slots."""
+       from scheduling.loader import load_problem
+
+       problem = load_problem(db_path)
+       assert len(problem.courses) == 21
+       assert len(problem.rooms) == 10
+       assert len(problem.slots) == 35
 
 
 @pytest.mark.skip(reason=TODO)
