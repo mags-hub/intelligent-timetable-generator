@@ -1,0 +1,22 @@
+# Ticket 11: run the tests on every pull request.
+# To make a failing run BLOCK merging, turn on branch protection and add the check
+# named "test" as a required status check (steps in docs/team-workflow.md).
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python database/build_db.py
+      - run: python -m pytest tests -v
