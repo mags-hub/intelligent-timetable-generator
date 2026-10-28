@@ -1,37 +1,85 @@
+```html
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Generate · Timetable Generator</title>
   <link rel="stylesheet" href="../css/styles.css">
 </head>
+
 <body>
-  <header><a href="dashboard.html">Dashboard</a></header>
+  <header>
+    <a href="dashboard.html">Dashboard</a>
+  </header>
+
   <main>
     <h1>Generate timetable</h1>
-    <!-- TODO (Ticket 3 / 6): four steps, in this order:
-         1. choose semester + academic year, press "Generate" -> POST /api/timetables/generate
-         2. preview the draft in a grid (reuse the grid renderer from js/timetable.js)
-         3. fix problems by hand: change an entry's room or slot -> PUT .../entries/<id>;
-            show the clash reason from a 409 in plain words
-         4. press "Publish" -> POST /api/timetables/<id>/publish -->
+
+    <h2>Step 1: Choose semester and academic year</h2>
+
     <form id="generate-form">
       <label for="semester">Semester</label>
-      <select id="semester"><option value="1">1</option><option value="2">2</option></select>
+      <select id="semester" name="semester" required>
+        <option value="1">Semester 1</option>
+        <option value="2">Semester 2</option>
+      </select>
+
       <label for="year">Academic year</label>
-      <input id="year" type="number" value="2026">
-      <button type="submit">Generate</button>
+      <input id="year" name="year" type="number" min="2000" max="2100" value="2026" required>
+
+      <button type="submit">Generate timetable</button>
     </form>
+
     <p id="status" role="status"></p>
-    <section id="preview" aria-label="Timetable preview"></section>
-    <button id="publish" type="button" hidden>Publish timetable</button>
+
+    <section>
+      <h2>Step 2: Preview timetable</h2>
+      <p>Review the generated timetable below.</p>
+      <div id="preview" aria-label="Timetable preview"></div>
+    </section>
+
+    <section>
+      <h2>Step 3: Fix timetable problems</h2>
+      <p>
+        If a lesson has a room or time-slot problem, select the entry
+        and provide the correct room or time slot.
+      </p>
+
+      <form id="edit-entry-form">
+        <label for="entry-id">Timetable entry ID</label>
+        <input id="entry-id" type="number" min="1" required>
+
+        <label for="room-id">Room ID</label>
+        <input id="room-id" type="number" min="1">
+
+        <label for="slot-id">Time-slot ID</label>
+        <input id="slot-id" type="number" min="1">
+
+        <button type="submit">Update entry</button>
+      </form>
+
+      <p id="edit-status" role="status"></p>
+    </section>
+
+    <section>
+      <h2>Step 4: Publish timetable</h2>
+      <p>Publish the timetable after reviewing and correcting it.</p>
+      <button id="publish" type="button" hidden>
+        Publish timetable
+      </button>
+    </section>
   </main>
+
   <script type="module">
-    import { requireRole } from "../js/auth.js";
-    import { initGeneratePage } from "../js/generate.js";
+    import {requireRole} from "../js/auth.js";
+    import {initGeneratePage} from "../js/generate.js";
+
     await requireRole("admin");
     initGeneratePage();
   </script>
 </body>
+
 </html>
+```

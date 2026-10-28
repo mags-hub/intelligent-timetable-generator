@@ -1,34 +1,191 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin · Timetable Generator</title>
   <link rel="stylesheet" href="../css/styles.css">
 </head>
-<body>
-  <header>
-    <nav aria-label="Admin sections">
-      <!-- Same links on every admin page. TODO (Ticket 3): move into a shared nav script. -->
-      <a href="dashboard.html">Dashboard</a>
-      <a href="manage.html?type=lecturers">Lecturers</a>
-      <a href="manage.html?type=courses">Courses</a>
-      <a href="manage.html?type=rooms">Rooms</a>
-      <a href="manage.html?type=student-groups">Student groups</a>
-      <a href="manage.html?type=time-slots">Time slots</a>
-      <a href="generate.html">Generate timetable</a>
-      <button id="logout" type="button">Sign out</button>
-    </nav>
+
+<body class="dashboard-page">
+
+  <header class="dashboard-header">
+    <nav id="admin-nav" aria-label="Admin sections"></nav>
   </header>
-  <main>
-    <h1>Dashboard</h1>
-    <!-- TODO (Ticket 3): show counts (lecturers, courses, rooms, groups) and the
-         status of the latest timetable (draft / published). -->
+
+  <main class="dashboard-main">
+
+    <section class="dashboard-welcome">
+      <div class="welcome-icon">📅</div>
+      <h1>Dashboard</h1>
+      <p>Welcome to the Timetable Generator Admin Dashboard.</p>
+    </section>
+
+    <section class="overview-section">
+      <h2>System Overview</h2>
+
+      <div class="dashboard-cards">
+
+        <article class="dashboard-card lecturers-card">
+          <div class="card-icon">👥</div>
+          <h3>Lecturers</h3>
+          <p class="card-number" id="lecturer-count">0</p>
+          <p class="card-description">Total registered lecturers</p>
+        </article>
+
+        <article class="dashboard-card courses-card">
+          <div class="card-icon">📖</div>
+          <h3>Courses</h3>
+          <p class="card-number" id="course-count">0</p>
+          <p class="card-description">Total registered courses</p>
+        </article>
+
+        <article class="dashboard-card rooms-card">
+          <div class="card-icon">🏢</div>
+          <h3>Rooms</h3>
+          <p class="card-number" id="room-count">0</p>
+          <p class="card-description">Total registered rooms</p>
+        </article>
+
+        <article class="dashboard-card groups-card">
+          <div class="card-icon">👥</div>
+          <h3>Student Groups</h3>
+          <p class="card-number" id="group-count">0</p>
+          <p class="card-description">Total registered groups</p>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="latest-timetable">
+
+      <div class="latest-info">
+        <div class="calendar-icon">📅</div>
+        <div>
+          <h2>Latest Timetable</h2>
+          <p>Current status of the most recent timetable.</p>
+        </div>
+      </div>
+
+      <div class="latest-status">
+        <span class="status-badge" id="status-badge">Loading...</span>
+        <p>
+          Status:
+          <strong id="timetable-status">Loading...</strong>
+        </p>
+        <p id="timetable-updated">Last updated: Not available</p>
+      </div>
+
+    </section>
+
+    <p id="dashboard-error" class="dashboard-error" role="status"></p>
+
   </main>
+
+  <footer class="dashboard-footer">
+    Timetable Generator · Admin Panel
+  </footer>
+
   <script type="module">
-    import { requireRole, handleLogout } from "../js/auth.js";
+    import {requireRole, handleLogout} from "../js/auth.js";
+    import {loadAdminNav} from "../js/admin-nav.js";
+    import {api} from "../js/api.js";
+
     await requireRole("admin");
+
+    loadAdminNav(document.getElementById("admin-nav"));
     handleLogout(document.getElementById("logout"));
+
+    function getRecords(response) {
+      if (Array.isArray(response)) return response;
+      if (Array.isArray(response?.data)) return response.data;
+      if (Array.isArray(response?.items)) return response.items;
+      return [];
+    }
+
+    async function loadDashboard() {
+      const errorMessage = document.getElementById("dashboard-error");
+
+      const resources = [
+        {endpoint: "/api/lecturers", element: "lecturer-count"},
+        {endpoint: "/api/courses", element: "course-count"},
+        {endpoint: "/api/rooms", element: "room-count"},
+        {endpoint: "/api/student-groups", element: "group-count"}
+      ];
+
+      const results = await Promise.allSettled(
+        resources.map(resource => api.get(resource.endpoint))
+      );
+
+      results.forEach((result, index) => {
+        const element = document.getElementById(
+          resources[index].element
+        );
+
+        if (result.status === "fulfilled") {
+          element.textContent = getRecords(result.value).length;
+        } else {
+          element.textContent = "—";
+          errorMessage.textContent =
+            "Some dashboard counts could not be loaded. Check your API connection.";
+        }
+      });
+
+      try {
+        const response = await api.get("/api/timetables");
+        const timetables = getRecords(response);
+
+        if (timetables.length === 0) {
+          showTimetableStatus("No timetable generated");
+          return;
+        }
+
+        // Use the most recently updated timetable when dates are available.
+        timetables.sort((a, b) =>
+          new Date(b.updated_at || b.updatedAt || b.created_at || b.createdAt || 0) -
+          new Date(a.updated_at || a.updatedAt || a.created_at || a.createdAt || 0)
+        );
+
+        const latest = timetables[0];
+        const status = String(latest.status || "draft").toLowerCase();
+
+        showTimetableStatus(status);
+
+        const updated = latest.updated_at || latest.updatedAt ||
+          latest.created_at || latest.createdAt;
+
+        if (updated) {
+          const date = new Date(updated);
+          document.getElementById("timetable-updated").textContent =
+            "Last updated: " +
+            (Number.isNaN(date.getTime()) ? updated : date.toLocaleString());
+        }
+
+      } catch (error) {
+        showTimetableStatus("Unable to load timetable");
+      }
+    }
+
+    function showTimetableStatus(status) {
+      const statusText = document.getElementById("timetable-status");
+      const badge = document.getElementById("status-badge");
+
+      statusText.textContent = status;
+      badge.textContent = status;
+
+      badge.classList.remove("published", "draft");
+
+      if (status.toLowerCase() === "published") {
+        badge.classList.add("published");
+      } else if (status.toLowerCase() === "draft") {
+        badge.classList.add("draft");
+      }
+    }
+
+    await loadDashboard();
   </script>
+
 </body>
+
 </html>

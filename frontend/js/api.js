@@ -35,7 +35,53 @@ export const api = {
 };
 
 function mock(method, url, body) {
-  // TODO (Ticket 3): return realistic sample data, e.g. for GET /api/lecturers:
-  //   [{ id: 1, name: "Bukasa" }, { id: 2, name: "Kudzai" }]
+  if (method === "GET" && url === "/api/lecturers") {
+    return Promise.resolve([
+      { id: 1, name: "Bukasa", email: "bukasa@example.com" },
+      { id: 2, name: "Kudzai", email: "kudzai@example.com" }
+    ]);
+  }
+
+  if (method === "GET" && url === "/api/courses") {
+    return Promise.resolve([
+      { id: 1, code: "IT101", name: "Introduction to IT" },
+      { id: 2, code: "DB201", name: "Database Systems" }
+    ]);
+  }
+
+  if (method === "GET" && url === "/api/rooms") {
+    return Promise.resolve([
+      { id: 1, name: "Room A", capacity: 40 },
+      { id: 2, name: "Computer Lab 1", capacity: 30 }
+    ]);
+  }
+
+  if (method === "GET" && url === "/api/student-groups") {
+    return Promise.resolve([
+      { id: 1, name: "Group 1", year_level: 1, size: 35 },
+      { id: 2, name: "Group 2", year_level: 2, size: 28 }
+    ]);
+  }
+
+  if (method === "GET" && url === "/api/time-slots") {
+    return Promise.resolve([
+      {
+        id: 1,
+        day_of_week: "Monday",
+        start_time: "08:15",
+        end_time: "09:15",
+        is_break: false
+      },
+      {
+        id: 2,
+        day_of_week: "Tuesday",
+        start_time: "09:15",
+        end_time: "10:15",
+        is_break: false
+      }
+    ]);
+  }
+
   return Promise.resolve([]);
 }
+

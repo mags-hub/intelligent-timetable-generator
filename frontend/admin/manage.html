@@ -1,11 +1,13 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manage · Timetable Generator</title>
   <link rel="stylesheet" href="../css/styles.css">
 </head>
+
 <body>
   <header>
     <nav aria-label="Admin sections">
@@ -23,13 +25,16 @@
     <button id="add-button" type="button">Add new</button>
     <p id="status" role="status"></p>
     <div id="table-area"><!-- list of records is rendered here --></div>
-    <dialog id="edit-dialog"><form id="edit-form" method="dialog"><!-- fields rendered here --></form></dialog>
+    <dialog id="edit-dialog">
+      <form id="edit-form" method="dialog"><!-- fields rendered here --></form>
+    </dialog>
   </main>
   <script type="module">
-    import { requireRole } from "../js/auth.js";
-    import { initManagePage } from "../js/admin.js";
+    import {requireRole} from "../js/auth.js";
+    import {initManagePage} from "../js/admin.js";
     await requireRole("admin");
     initManagePage();
   </script>
 </body>
+
 </html>
