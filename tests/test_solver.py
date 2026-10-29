@@ -6,6 +6,7 @@ import pytest
 from scheduling.backtracking import solve, solve_with_reason
 from scheduling.constraints import hard_violations
 from scheduling.generate import generate_timetable
+from scheduling.genetic import GAParams
 from scheduling.models import (
     Assignment, Course, Group, Problem, Room, Slot, Solution,
 )
@@ -281,8 +282,10 @@ def test_solver_finishes_within_time_limit_on_all_years(db_path):
 
 def test_generate_timetable_saves_a_valid_draft(db_path):
     """The one function the backend calls: load, solve, save."""
-    result = generate_timetable(str(db_path), "Test draft", 2, 2026)
+    result = generate_timetable(str(db_path), "Test draft", 2, 2026,
+                                ga_params=GAParams(population_size=10, generations=10))
     assert result.feasible and result.message == "ok"
+    assert result.score is not None
     assert result.timetable_id is not None
     con = sqlite3.connect(str(db_path))
     status = con.execute("SELECT status FROM timetables WHERE id = ?", (result.timetable_id,)).fetchone()[0]

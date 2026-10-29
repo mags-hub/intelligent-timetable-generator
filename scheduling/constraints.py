@@ -147,14 +147,92 @@ def is_valid(problem: Problem, solution: Solution) -> bool:
     return not hard_violations(problem, solution)
 
 
-def soft_score(problem: Problem, solution: Solution) -> float:
-    """Higher is better.
+class SoftScorer:
+    """Scores how pleasant a valid timetable is. Higher is better, 0 is perfect.
 
-    TODO (Ticket 10): combine weighted soft goals, for example
-      - fewer gaps in a group's day
-      - lecturer workload spread across the week
-      - preferred room type used (labs for programming)
-      - no very early or very late classes where avoidable
-    Write the final formula and weights in docs/solver-design.md.
+    Built once per Problem so the genetic algorithm can score thousands of
+    timetables quickly. Each goal is counted, multiplied by its weight and subtracted.
     """
-    raise NotImplementedError("TODO Ticket 10: soft_score")
+
+    WEIGHTS = {"gaps": 3, "load": 2, "rooms": 2, "type": 1, "late": 1}
+
+    def __init__(self, problem: Problem, weights: dict | None = None):
+        self.weights = dict(self.WEIGHTS, **(weights or {}))
+        self.courses = {c.id: c for c in problem.courses}
+        self.rooms = {r.id: r for r in problem.rooms}
+        self.slots = {s.id: s for s in problem.slots}
+        groups = {g.id: g for g in problem.groups}
+
+        # position of every teaching slot inside its day (lunch is not a slot, so it is never a gap)
+        by_day = defaultdict(list)
+        for s in problem.slots:
+            by_day[s.day].append(s)
+        self.days = sorted(by_day)
+        self.position = {}
+        self.last_position = {}
+        for day, day_slots in by_day.items():
+            day_slots.sort(key=lambda s: s.start)
+            for i, s in enumerate(day_slots):
+                self.position[s.id] = i
+            self.last_position[day] = len(day_slots) - 1
+
+        # a class for a group is also attended by every sub-group of it
+        self.audience = {g: {g} for g in groups}
+        for g in groups:
+            for ancestor in _group_chain(g, groups):
+                self.audience[ancestor].add(g)
+
+    def components(self, assignments) -> dict:
+        group_day = defaultdict(set)      # (group, day) -> positions of its classes
+        lecturer_day = defaultdict(int)   # (lecturer, day) -> hours taught
+        rooms_used = defaultdict(set)     # course -> rooms used
+        wrong_type = 0
+        late = 0
+        for a in assignments:
+            course = self.courses.get(a.course_id)
+            slot = self.slots.get(a.slot_id)
+            room = self.rooms.get(a.room_id)
+            if course is None or slot is None or room is None:
+                continue
+            pos = self.position[slot.id]
+            for g in course.group_ids:
+                for member in self.audience.get(g, ()):
+                    group_day[(member, slot.day)].add(pos)
+            lecturer_day[(course.lecturer_id, slot.day)] += 1
+            rooms_used[course.id].add(room.id)
+            if course.preferred_room_type and room.room_type != course.preferred_room_type:
+                wrong_type += 1
+            if pos == self.last_position[slot.day]:
+                late += 1
+
+        gaps = sum(max(p) - min(p) + 1 - len(p) for p in group_day.values())
+
+        per_lecturer = defaultdict(lambda: {d: 0 for d in self.days})
+        for (lecturer, day), hours in lecturer_day.items():
+            per_lecturer[lecturer][day] = hours
+        imbalance = 0.0
+        for hours in per_lecturer.values():
+            mean = sum(hours.values()) / len(hours)
+            imbalance += sum((h - mean) ** 2 for h in hours.values()) / len(hours)
+
+        room_changes = sum(len(r) - 1 for r in rooms_used.values())
+        return {"gaps": gaps, "load": imbalance, "rooms": room_changes, "type": wrong_type, "late": late}
+
+    def score(self, assignments) -> float:
+        c = self.components(assignments)
+        return -sum(self.weights[k] * c[k] for k in self.weights)
+
+
+def soft_score(problem: Problem, solution: Solution) -> float:
+    """Higher is better. 0 would mean no gaps, perfectly even lecturer days, one room per
+    course, every class in its preferred room type and nothing in the last slot of the day.
+
+    gaps   idle teaching slots between a group's first and last class of a day
+    load   how unevenly each lecturer's hours are spread over the week (variance of daily hours)
+    rooms  rooms a course uses beyond its first
+    type   classes not in the course's preferred room type
+    late   classes in the last teaching slot of the day
+
+    Weights are in SoftScorer.WEIGHTS and are written up in docs/solver-design.md.
+    """
+    return SoftScorer(problem).score(solution.assignments)
