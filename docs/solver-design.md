@@ -77,26 +77,63 @@ Rules found while building:
 | Automated tests | 26 passing |
 
 ## 4. Soft constraints and fitness function (Ticket 10)
-TODO: write the formula. Example shape:
+
+The backtracking solver only guarantees a valid timetable. The soft score measures how good a valid timetable is. It is a penalty score: every unwanted thing is counted, multiplied by a weight and subtracted, so 0 is perfect and higher is better.
 
 ```
-score = w1 * (-gap_hours) + w2 * (-workload_imbalance) + w3 * (preferred_room_matches) + ...
+score = -( 3 * gaps + 2 * load + 2 * rooms + 1 * type + 1 * late )
 ```
 
 | Soft goal | Weight | How it is measured |
 |---|---|---|
-| TODO | TODO | TODO |
+| gaps | 3 | Free teaching slots between a group's first and last class of a day. Lunch is not a slot, so it never counts as a gap. A sub-group is counted with its parent group's classes. |
+| load | 2 | How unevenly each lecturer's hours are spread over Monday to Friday: the variance of the lecturer's daily hours, added up over all lecturers. |
+| rooms | 2 | Rooms a course uses beyond its first, so a course that stays in one room all week scores best. |
+| type | 1 | Classes not held in the course's preferred room type (for example a lab course in a lecture room). |
+| late | 1 | Classes in the last teaching slot of the day. We do not penalise the first slot, because 08:15 is the normal start of the day. |
 
-## 5. Genetic algorithm parameters (Ticket 10)
+The weights put a student's day (gaps) first, then lecturer workload and room consistency, then the two minor preferences. They are in `SoftScorer.WEIGHTS` in `constraints.py` and can be tuned without changing any other code.
+
+On the real data the solver's first timetable already scores 0 on gaps, type and late, because of the order in which it tries options. The room that a course uses and the spread of a lecturer's week are what the genetic algorithm improves.
+
+## 5. Genetic algorithm (Ticket 10)
+
+**Individual.** One timetable, stored as a list with one (window of slots, room) entry for each block of classes. Anything that is locked, or that does not form a clean block, is frozen and never moved.
+
+**Operators.** All of them keep the timetable valid, because every change is checked for clashes as it is made and is undone if it would cause one:
+
+- **Initial population:** the solver's timetable plus mutated copies of it.
+- **Selection:** tournament of 3 random timetables, the best one wins.
+- **Crossover:** a child starts as a copy of one parent. For each course, chosen at random, the course's placement is taken from the other parent, but only if it causes no clash.
+- **Mutation:** each movable block, with probability `mutation_rate`, is either moved to another window and/or room, or swapped in time with another block of the same length. Each move is only kept if it causes no clash.
+- **Elitism:** the best timetables are copied unchanged into the next generation.
+- **Result:** the best timetable found. It is never worse than the starting timetable, it is checked with `hard_violations` one last time, and if anything were wrong the starting timetable is returned instead.
 
 | Parameter | Value | Why |
 |---|---|---|
-| population_size | 50 | TODO tune |
-| generations | 200 | TODO tune |
-| mutation_rate | 0.05 | TODO tune |
-| crossover_rate | 0.8 | TODO tune |
-| elite_size | 2 | TODO tune |
+| population_size | 50 | Enough variety for 21 courses without slowing a request down |
+| generations | 200 | The score stops improving well before this on the seeded data |
+| mutation_rate | 0.05 | Each movable block has a 5% chance of being changed, about 2 to 3 changes per child |
+| crossover_rate | 0.8 | Most children mix two parents |
+| elite_size | 2 | The two best are never lost |
+| seed | 42 | A fixed seed gives the same result every run, which keeps the tests and the report repeatable |
+| time_limit_s | 20 | A safety stop so that generating can never run for long |
 
 ## 6. Results
-TODO: soft score before vs after the GA, run time, and a comparison with the manual Richfield
-timetable (gaps per group, lecturer workload). This is your strongest evidence for the report.
+
+Measured on the seeded Richfield data (21 courses, 76 class hours), all years together, with the default parameters and seed 42.
+
+| Measure | Solver only | After the genetic algorithm |
+|---|---|---|
+| Soft score (higher is better) | -14.72 | -6.72 |
+| Gaps | 0 | 0 |
+| Lecturer load imbalance | 3.36 | 1.36 |
+| Extra rooms used by courses | 4 | 2 |
+| Wrong room type | 0 | 0 |
+| Late classes | 0 | 0 |
+| Hard-rule violations | 0 | 0 |
+| Run time | about 1 second | about 3 seconds more |
+
+The genetic algorithm more than halves the penalty. Lecturers' weeks are spread more evenly and courses move between rooms less, and not a single hard rule is broken. Twelve automated tests check the soft score and the algorithm: that the score improves, that the result is still valid, that it is never worse than the start, that locked entries do not move, and that the same seed gives the same result.
+
+**Limits.** The algorithm improves the score but does not guarantee the best possible timetable. It depends on the weights, which are our judgement and would be set with the school in real use. The numbers in the table were measured once on the development data, so re-measure them on your own machine before the final report.
