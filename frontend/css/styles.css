@@ -1,0 +1,27 @@
+/* Shared tokens. Replace these values once the team picks a look (Ticket 3). */
+:root {
+  --bg: #ffffff;
+  --text: #1c1f24;
+  --muted: #5d6673;
+  --accent: #1f4fd8;
+  --border: #d5d9e0;
+  --danger: #b3261e;
+  --space: 1rem;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font); color: var(--text); background: var(--bg); line-height: 1.5; }
+main, header { padding: var(--space); max-width: 72rem; margin: 0 auto; }
+.narrow { max-width: 24rem; }
+
+label { display: block; margin-top: var(--space); font-weight: 600; }
+input, select, button { font: inherit; padding: 0.5rem 0.75rem; }
+input, select { width: 100%; border: 1px solid var(--border); border-radius: 4px; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+[role="alert"] { color: var(--danger); }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; }
+.scroll-x { overflow-x: auto; }   /* wrap wide tables so phones can scroll sideways */

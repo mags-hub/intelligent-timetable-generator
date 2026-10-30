@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Timetable Generator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="narrow">
+    <h1>Sign in</h1>
+    <!-- TODO (Ticket 3): style this form; keep labels and the error area. -->
+    <form id="login-form">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+      <p id="login-error" role="alert" hidden></p>
+      <button type="submit">Sign in</button>
+    </form>
+  </main>
+  <script type="module">
+    import { handleLoginForm } from "./js/auth.js";
+    handleLoginForm(document.getElementById("login-form"));
+  </script>
+</body>
+</html>
