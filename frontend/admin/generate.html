@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generate · Timetable Generator</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header><a href="dashboard.html">Dashboard</a></header>
+  <main>
+    <h1>Generate timetable</h1>
+    <!-- TODO (Ticket 3 / 6): four steps, in this order:
+         1. choose semester + academic year, press "Generate" -> POST /api/timetables/generate
+         2. preview the draft in a grid (reuse the grid renderer from js/timetable.js)
+         3. fix problems by hand: change an entry's room or slot -> PUT .../entries/<id>;
+            show the clash reason from a 409 in plain words
+         4. press "Publish" -> POST /api/timetables/<id>/publish -->
+    <form id="generate-form">
+      <label for="semester">Semester</label>
+      <select id="semester"><option value="1">1</option><option value="2">2</option></select>
+      <label for="year">Academic year</label>
+      <input id="year" type="number" value="2026">
+      <button type="submit">Generate</button>
+    </form>
+    <p id="status" role="status"></p>
+    <section id="preview" aria-label="Timetable preview"></section>
+    <button id="publish" type="button" hidden>Publish timetable</button>
+  </main>
+  <script type="module">
+    import { requireRole } from "../js/auth.js";
+    import { initGeneratePage } from "../js/generate.js";
+    await requireRole("admin");
+    initGeneratePage();
+  </script>
+</body>
+</html>

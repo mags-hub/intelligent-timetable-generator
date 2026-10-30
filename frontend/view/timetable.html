@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My timetable · Timetable Generator</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header>
+    <h1>My timetable</h1>
+    <button id="logout" type="button">Sign out</button>
+  </header>
+  <main>
+    <!-- TODO (Ticket 4): week / day toggle; weekly grid on wide screens, day list on phones. -->
+    <div id="view-toggle" role="group" aria-label="View">
+      <button type="button" data-view="week">Week</button>
+      <button type="button" data-view="day">Day</button>
+    </div>
+    <div id="timetable-area"></div>
+    <p id="empty-state" hidden>No timetable has been published yet. Check back once your institution publishes it.</p>
+  </main>
+  <script type="module">
+    import { requireRole, handleLogout } from "../js/auth.js";
+    import { initTimetableView } from "../js/timetable.js";
+    await requireRole("lecturer", "student");
+    handleLogout(document.getElementById("logout"));
+    initTimetableView();
+  </script>
+</body>
+</html>
