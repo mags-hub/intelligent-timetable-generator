@@ -85,6 +85,12 @@ def _clean_body(table):
     # trim whitespace on strings
     data = {k: (v.strip() if isinstance(v, str) else v) for k, v in data.items()}
 
+    # an empty string in an optional column means "no value": store NULL, so two blank
+    # emails do not collide on the UNIQUE rule
+    for name, col in columns.items():
+        if data.get(name) == "" and not col["notnull"]:
+            data[name] = None
+
     # required = NOT NULL and no default value in the schema
     missing = [
         name
@@ -101,6 +107,11 @@ def _clean_body(table):
             continue
         if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
             abort(400, f"'{field}' must be a positive whole number")
+
+    if table == "courses" and "block_hours" in data and "weekly_hours" in data:
+        block, weekly = data["block_hours"], data["weekly_hours"]
+        if isinstance(block, int) and isinstance(weekly, int) and block > weekly:
+            abort(400, "'block_hours' cannot be more than 'weekly_hours'")
 
     allowed = ", ".join(sorted(VALID_ROOM_TYPES))
     for field in ("room_type", "preferred_room_type"):
@@ -125,6 +136,15 @@ def _integrity_message(exc, action):
     if text.startswith("FOREIGN KEY constraint failed"):
         return f"Cannot {action}: it refers to a record that does not exist."
     return f"Cannot {action}: {text}"
+
+
+def _abort_for_integrity(exc, action):
+    """409 for clashes and duplicates; 400 when a value breaks a CHECK rule."""
+    text = str(exc)
+    if text.startswith("CHECK constraint failed"):
+        rule = text.split(":", 1)[1].strip()
+        abort(400, f"Cannot {action}: a value is not allowed ({rule}).")
+    abort(409, _integrity_message(exc, action))
 
 
 # ----------------------------------------------------------------- routes --
@@ -153,7 +173,7 @@ def create_item(resource):
         db.commit()
     except sqlite3.IntegrityError as exc:
         db.rollback()
-        abort(409, _integrity_message(exc, f"create {resource}"))
+        _abort_for_integrity(exc, f"create {resource}")
 
     row = _fetch_one(table, cur.lastrowid)
     return jsonify(dict(row)), 201
@@ -184,7 +204,7 @@ def update_item(resource, item_id):
         db.commit()
     except sqlite3.IntegrityError as exc:
         db.rollback()
-        abort(409, _integrity_message(exc, f"update {resource}/{item_id}"))
+        _abort_for_integrity(exc, f"update {resource}/{item_id}")
 
     return jsonify(dict(_fetch_one(table, item_id)))
 
@@ -209,7 +229,7 @@ def delete_item(resource, item_id):
             "Remove or reassign those first.",
         )
 
-    return "", 204
+    return jsonify({})
 
 
 # ------------------------------------------------------- course <-> groups --
@@ -236,6 +256,8 @@ def set_course_groups(item_id):
         isinstance(g, bool) or not isinstance(g, int) for g in group_ids
     ):
         abort(400, 'Body must be {"group_ids": [<int>, ...]}')
+    if not group_ids:
+        abort(400, "A course needs at least one group")
     group_ids = sorted(set(group_ids))
 
     db = get_db()
@@ -248,6 +270,6 @@ def set_course_groups(item_id):
         db.commit()
     except sqlite3.IntegrityError as exc:
         db.rollback()  # restores the old groups if any new id is invalid
-        abort(409, _integrity_message(exc, f"update groups for course {item_id}"))
+        _abort_for_integrity(exc, f"update groups for course {item_id}")
 
     return jsonify({"course_id": item_id, "group_ids": group_ids})
