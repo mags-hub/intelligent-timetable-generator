@@ -5,12 +5,13 @@ Flow:  admin POSTs /generate  ->  a *draft* timetable is created by scheduling/
 """
 from flask import Blueprint, abort
 
-from ..auth import login_required, role_required  # noqa: F401
+from ..auth import login_required, role_required
 
 bp = Blueprint("timetable", __name__, url_prefix="/api/timetables")
 
 
 @bp.post("/generate")
+@role_required("admin")
 def generate():
     # TODO (Ticket 6), admin only:
     #   from scheduling.generate import generate_timetable     (import INSIDE the function)
@@ -21,12 +22,14 @@ def generate():
 
 
 @bp.get("")
+@role_required("admin")
 def list_timetables():
     # TODO (Ticket 6), admin only: list drafts and published timetables (id, name, status, created_at).
     abort(501, "TODO Ticket 6: list timetables")
 
 
 @bp.get("/<int:timetable_id>")
+@login_required
 def get_timetable(timetable_id):
     # TODO (Ticket 6): all entries of one timetable from the v_timetable_full view.
     #   Admin can read any status; lecturer/student only 'published'.
@@ -34,6 +37,7 @@ def get_timetable(timetable_id):
 
 
 @bp.put("/<int:timetable_id>/entries/<int:entry_id>")
+@role_required("admin")
 def edit_entry(timetable_id, entry_id):
     # TODO (Ticket 6), admin only: manual override of one entry (new room or slot).
     #   Set is_locked = 1 so regeneration does not move it. A clash makes the database raise
@@ -42,6 +46,7 @@ def edit_entry(timetable_id, entry_id):
 
 
 @bp.post("/<int:timetable_id>/publish")
+@role_required("admin")
 def publish(timetable_id):
     # TODO (Ticket 6), admin only: set status = 'published' and published_at = now.
     #   Only one published timetable per semester/year is allowed (database enforces it);
@@ -50,6 +55,7 @@ def publish(timetable_id):
 
 
 @bp.get("/published/mine")
+@login_required
 def my_timetable():
     # TODO (Ticket 6), login required: the published timetable filtered for the current user.
     #   lecturer -> rows where lecturer_id = user.lecturer_id
@@ -57,3 +63,4 @@ def my_timetable():
     #   Return an empty list plus {"published": false} when nothing is published yet
     #   (Ticket 4's "no timetable yet" screen depends on this).
     abort(501, "TODO Ticket 6: my timetable")
+
