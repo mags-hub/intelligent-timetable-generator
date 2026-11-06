@@ -1,5 +1,8 @@
 """Flask application factory."""
-from flask import Flask, jsonify
+import sqlite3
+
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import HTTPException
 
 from . import auth, db
 from .config import REPO_ROOT, Config
@@ -31,7 +34,23 @@ def create_app(test_config: dict | None = None) -> Flask:
     def health():
         return jsonify(status="ok")
 
-    # TODO (Ticket 6): turn sqlite3.IntegrityError into a JSON 409 error handler, so a clash
-    #                  attempt returns {"error": "..."} instead of a 500 page.
+    # Ticket 6: a broken database rule (clash, duplicate, missing reference) is a 409 with a
+    # reason, never a 500 page.
+    @app.errorhandler(sqlite3.IntegrityError)
+    def handle_integrity_error(exc):
+        try:
+            db.get_db().rollback()
+        except Exception:  # nothing to roll back
+            pass
+        return jsonify(error=str(exc)), 409
+
+    # Ticket 6: the API contract says every API error is {"error": "..."}.
+    # Only /api/ paths are changed; the frontend's own pages keep Flask's normal error pages.
+    @app.errorhandler(HTTPException)
+    def handle_http_error(exc):
+        if request.path.startswith("/api/"):
+            return jsonify(error=exc.description), exc.code
+        return exc
+
     # TODO (Ticket 12): decide how the frontend is hosted in production (see docs/deployment.md).
     return app

@@ -10,6 +10,7 @@ from flask import Blueprint, abort, current_app, jsonify, request, session
 from ..auth import login_required, role_required
 from ..db import get_db
 
+
 bp = Blueprint("timetable", __name__, url_prefix="/api/timetables")
 
 
@@ -217,6 +218,7 @@ def publish(timetable_id):
 @bp.get("/published/mine")
 @login_required
 def my_timetable():
+
     user = _current_user()
     if user is None:
         abort(401, "Not signed in")
@@ -246,3 +248,5 @@ def my_timetable():
         "name": tt["name"],
         "entries": entries,
     })
+
+   
