@@ -7,28 +7,20 @@
   <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-  <header>
-    <nav aria-label="Admin sections">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="manage.html?type=lecturers">Lecturers</a>
-      <a href="manage.html?type=courses">Courses</a>
-      <a href="manage.html?type=rooms">Rooms</a>
-      <a href="manage.html?type=student-groups">Student groups</a>
-      <a href="manage.html?type=time-slots">Time slots</a>
-      <a href="generate.html">Generate timetable</a>
-    </nav>
-  </header>
+  <header id="nav"></header>
   <main>
-    <h1 id="page-title">Manage</h1>
-    <button id="add-button" type="button">Add new</button>
-    <p id="status" role="status"></p>
-    <div id="table-area"><!-- list of records is rendered here --></div>
-    <dialog id="edit-dialog"><form id="edit-form" method="dialog"><!-- fields rendered here --></form></dialog>
+    <div class="row"><div><h1 id="page-title">Manage</h1></div><div style="flex:0 0 auto"><button id="add-button" type="button">Add new</button></div></div>
+    <p id="status" role="status" class="msg"></p>
+    <div id="table-area"></div>
+    <dialog id="edit-dialog"><form id="edit-form" method="dialog"></form></dialog>
   </main>
   <script type="module">
     import { requireRole } from "../js/auth.js";
-    import { initManagePage } from "../js/admin.js";
+    import { renderAdminNav } from "../js/nav.js";
+    import { initManagePage, TYPES } from "../js/admin.js";
     await requireRole("admin");
+    const type = new URLSearchParams(window.location.search).get("type");
+    renderAdminNav(TYPES[type] ? TYPES[type].title : "");
     initManagePage();
   </script>
 </body>

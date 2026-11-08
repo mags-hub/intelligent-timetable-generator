@@ -1,6 +1,6 @@
 // All backend calls go through here. Pages never call fetch() directly.
 
-// While Ticket 6 is unfinished, set USE_MOCK = true and return fake data from `mock()`.
+// While the backend is unfinished, set USE_MOCK = true and return fake data from `mock()`.
 export const USE_MOCK = false;
 
 async function request(method, url, body) {
@@ -13,8 +13,10 @@ async function request(method, url, body) {
     credentials: "same-origin",
   });
 
-  if (res.status === 401) {
-    window.location.href = "/login.html";       // not signed in
+  // Not signed in: send the user to the sign-in page. The login request itself is the one
+  // exception, because a 401 there only means "wrong password" and must be shown on the form.
+  if (res.status === 401 && url !== "/api/auth/login") {
+    window.location.href = "/login.html";
     return new Promise(() => {});               // stop the caller
   }
   const data = await res.json().catch(() => ({}));
@@ -34,8 +36,6 @@ export const api = {
   del: (url) => request("DELETE", url),
 };
 
-function mock(method, url, body) {
-  // TODO (Ticket 3): return realistic sample data, e.g. for GET /api/lecturers:
-  //   [{ id: 1, name: "Bukasa" }, { id: 2, name: "Kudzai" }]
+function mock() {
   return Promise.resolve([]);
 }
