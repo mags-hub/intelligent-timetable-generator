@@ -7,28 +7,19 @@
   <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-  <header>
-    <nav aria-label="Admin sections">
-      <!-- Same links on every admin page. TODO (Ticket 3): move into a shared nav script. -->
-      <a href="dashboard.html">Dashboard</a>
-      <a href="manage.html?type=lecturers">Lecturers</a>
-      <a href="manage.html?type=courses">Courses</a>
-      <a href="manage.html?type=rooms">Rooms</a>
-      <a href="manage.html?type=student-groups">Student groups</a>
-      <a href="manage.html?type=time-slots">Time slots</a>
-      <a href="generate.html">Generate timetable</a>
-      <button id="logout" type="button">Sign out</button>
-    </nav>
-  </header>
+  <header id="nav"></header>
   <main>
     <h1>Dashboard</h1>
-    <!-- TODO (Ticket 3): show counts (lecturers, courses, rooms, groups) and the
-         status of the latest timetable (draft / published). -->
+    <div id="cards" class="cards"></div>
+    <section id="latest" class="panel" aria-live="polite">Loading...</section>
   </main>
   <script type="module">
-    import { requireRole, handleLogout } from "../js/auth.js";
+    import { requireRole } from "../js/auth.js";
+    import { renderAdminNav } from "../js/nav.js";
+    import { initDashboard } from "../js/dashboard.js";
     await requireRole("admin");
-    handleLogout(document.getElementById("logout"));
+    renderAdminNav("Dashboard");
+    initDashboard();
   </script>
 </body>
 </html>

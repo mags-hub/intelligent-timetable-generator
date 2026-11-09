@@ -7,25 +7,25 @@
   <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-  <header>
+  <header class="bar"><div class="inner">
     <h1>My timetable</h1>
     <button id="logout" type="button">Sign out</button>
-  </header>
+  </div></header>
   <main>
-    <!-- TODO (Ticket 4): week / day toggle; weekly grid on wide screens, day list on phones. -->
-    <div id="view-toggle" role="group" aria-label="View">
-      <button type="button" data-view="week">Week</button>
-      <button type="button" data-view="day">Day</button>
+    <p id="subtitle" class="muted"></p>
+    <div id="view-toggle" class="daytabs" role="group" aria-label="View">
+      <button type="button" data-view="week" aria-pressed="true">Week</button>
+      <button type="button" data-view="day" aria-pressed="false">Day</button>
     </div>
     <div id="timetable-area"></div>
-    <p id="empty-state" hidden>No timetable has been published yet. Check back once your institution publishes it.</p>
+    <p id="empty-state" class="msg info" hidden>No timetable has been published yet. Check back once your institution publishes it.</p>
   </main>
   <script type="module">
     import { requireRole, handleLogout } from "../js/auth.js";
     import { initTimetableView } from "../js/timetable.js";
-    await requireRole("lecturer", "student");
+    const user = await requireRole("lecturer", "student");
     handleLogout(document.getElementById("logout"));
-    initTimetableView();
+    initTimetableView(user);
   </script>
 </body>
 </html>
