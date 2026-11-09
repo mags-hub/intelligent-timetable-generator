@@ -96,3 +96,25 @@ ul.daylist li { border-radius: 8px; padding: 0.7rem 0.9rem; margin-bottom: 0.6re
 ul.daylist .time { color: var(--muted); font-size: 0.9rem; }
 ul.daylist .room { float: right; font-weight: 700; color: var(--accent); }
 @media (max-width: 700px) { main { padding: 0.75rem; } }
+/* ---- login page background ---- */
+body.login-page {
+  min-height: 100vh;
+  background: linear-gradient(rgba(31, 78, 120, 0.55), rgba(31, 78, 120, 0.55)),
+              url("../images/richfield.png") center / cover no-repeat fixed;
+}
+body.login-page .narrow {
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+/* ---- show / hide password ---- */
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 3rem; }
+button.eye {
+  position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none; color: var(--muted);
+  padding: 0.3rem; display: flex; align-items: center;
+}
+button.eye:hover { filter: none; color: var(--accent); }
+button.eye svg { width: 1.4rem; height: 1.4rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+button.eye .slash { display: none; }
+button.eye[aria-pressed="true"] .slash { display: block; }
