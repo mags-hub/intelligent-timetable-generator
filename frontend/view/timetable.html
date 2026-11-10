@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="bar"><div class="inner">
-    <h1>My timetable</h1>
+    <h1 id="page-heading">My timetable</h1>
     <button id="logout" type="button">Sign out</button>
   </div></header>
   <main>
@@ -21,9 +21,10 @@
     <p id="empty-state" class="msg info" hidden>No timetable has been published yet. Check back once your institution publishes it.</p>
   </main>
   <script type="module">
-    import { requireRole, handleLogout } from "../js/auth.js";
+    import { requireRole, handleLogout, greeting } from "../js/auth.js";
     import { initTimetableView } from "../js/timetable.js";
     const user = await requireRole("lecturer", "student");
+    document.getElementById("page-heading").textContent = greeting(user);
     handleLogout(document.getElementById("logout"));
     initTimetableView(user);
   </script>

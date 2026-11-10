@@ -50,3 +50,11 @@ export function handleLogout(button) {
     try { await api.post("/api/auth/logout"); } finally { window.location.href = "/login.html"; }
   });
 }
+// Builds the greeting, e.g. "Hi Lecturer Bukasa". Just "Hi Admin" if the username equals the role.
+export function greeting(user) {
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const role = cap(user.role);
+  return user.username.toLowerCase() === user.role
+    ? `Hi ${role}`
+    : `Hi ${role} ${cap(user.username)}`;
+}
