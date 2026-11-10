@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Timetable Generator</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header id="nav"></header>
+  <main>
+    <h1>Dashboard</h1>
+    <p id="greeting" class="muted"></p>
+    <div id="cards" class="cards"></div>
+    <section id="latest" class="panel" aria-live="polite">Loading...</section>
+  </main>
+  <script type="module">
+    import { requireRole, greeting } from "../js/auth.js";
+    import { renderAdminNav } from "../js/nav.js";
+    import { initDashboard } from "../js/dashboard.js";
+    const user = await requireRole("admin");
+    document.getElementById("greeting").textContent = greeting(user);
+    renderAdminNav("Dashboard");
+    initDashboard();
+  </script>
+</body>
+</html>

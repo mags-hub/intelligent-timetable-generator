@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generate · Timetable Generator</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header id="nav"></header>
+  <main>
+    <h1>Generate timetable</h1>
+    <p class="muted">1. Generate a draft. 2. Review it. 3. Move any class that needs changing. 4. Publish it.</p>
+    <form id="generate-form">
+      <div class="row">
+        <div><label for="semester">Semester</label>
+          <select id="semester" name="semester"><option value="1">1</option><option value="2" selected>2</option></select></div>
+        <div><label for="year">Academic year</label>
+          <input id="year" name="year" type="number" min="2000" value="2026" required></div>
+        <div style="flex:0 0 auto"><button type="submit">Generate draft</button></div>
+      </div>
+    </form>
+    <p id="status" role="status" class="msg"></p>
+    <section id="preview" aria-label="Timetable preview"></section>
+    <div class="actions"><button id="publish" type="button" class="go" hidden>Publish timetable</button></div>
+    <h2>All timetables</h2>
+    <section id="existing"></section>
+    <dialog id="move-dialog"><form id="move-form" method="dialog"></form></dialog>
+  </main>
+  <script type="module">
+    import { requireRole } from "../js/auth.js";
+    import { renderAdminNav } from "../js/nav.js";
+    import { initGeneratePage } from "../js/generate.js";
+    await requireRole("admin");
+    renderAdminNav("Generate timetable");
+    initGeneratePage();
+  </script>
+</body>
+</html>

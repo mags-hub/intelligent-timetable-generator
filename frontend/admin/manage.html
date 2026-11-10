@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage · Timetable Generator</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header id="nav"></header>
+  <main>
+    <div class="row"><div><h1 id="page-title">Manage</h1></div><div style="flex:0 0 auto"><button id="add-button" type="button">Add new</button></div></div>
+    <p id="status" role="status" class="msg"></p>
+    <div id="table-area"></div>
+    <dialog id="edit-dialog"><form id="edit-form" method="dialog"></form></dialog>
+  </main>
+  <script type="module">
+    import { requireRole } from "../js/auth.js";
+    import { renderAdminNav } from "../js/nav.js";
+    import { initManagePage, TYPES } from "../js/admin.js";
+    await requireRole("admin");
+    const type = new URLSearchParams(window.location.search).get("type");
+    renderAdminNav(TYPES[type] ? TYPES[type].title : "");
+    initManagePage();
+  </script>
+</body>
+</html>
