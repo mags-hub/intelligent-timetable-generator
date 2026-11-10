@@ -84,14 +84,14 @@ def login():
     if not isinstance(username, str) or not isinstance(password, str) \
             or not username.strip() or not password:
         abort(400, "Username and password are required")
-    username = username.strip()[:100]
+    username = username.strip()[:100].lower()    # usernames are not case-sensitive
 
     if _is_locked(username):
         abort(429, "Too many failed attempts. Try again in a minute.")
 
     row = get_db().execute(          # parameterised query: input never becomes SQL
         "SELECT id, username, password_hash, role FROM users "
-        "WHERE username = ? AND is_active = 1",
+        "WHERE lower(username) = ? AND is_active = 1",
         (username,),
     ).fetchone()
     password_ok = check_password_hash(row["password_hash"] if row else _DUMMY_HASH, password)
