@@ -11,9 +11,9 @@ python database/build_db.py          # fresh database at database/timetable.db
 python -m pytest tests/test_database_constraints.py -v
 ```
 
-Dev logins created by the build (local development only): `admin`, `bukasa` (lecturer),
-`student_bsc1` (student), all with password `ChangeMe123!`.
-
+Dev logins created by the build (local development only): `admin`; lecturers `bukasa`, `pam`,
+`kudzai`, `jonga`, `lebaka`, `muaaz`, `kelvin`, `itu`; students `student_bsc1`, `student_bsc2`,
+`student_bsc3`, all with password `ChangeMe123!`.
 ## ER diagram
 
 ```mermaid

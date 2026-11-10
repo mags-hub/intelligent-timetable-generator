@@ -59,6 +59,24 @@ def apply_seed(con: sqlite3.Connection, filename: str) -> None:
     print(f"  seed applied:      {filename}")
 
 
+# DEV-ONLY accounts. (username, group name) for students, (username, lecturer name) for lecturers.
+DEV_STUDENTS = [
+    ("student_bsc1", "BSC1-G1"),
+    ("student_bsc2", "BSC2"),
+    ("student_bsc3", "BSC3"),
+]
+DEV_LECTURERS = [
+    ("bukasa", "Bukasa"),
+    ("pam", "Pam"),
+    ("kudzai", "Kudzai"),
+    ("jonga", "Jonga"),
+    ("lebaka", "Lebaka"),
+    ("muaaz", "Muaaz"),
+    ("kelvin", "Kelvin"),
+    ("itu", "Itu"),
+]
+
+
 def seed_dev_users(con: sqlite3.Connection) -> None:
     try:
         from werkzeug.security import generate_password_hash
@@ -70,18 +88,21 @@ def seed_dev_users(con: sqlite3.Connection) -> None:
         "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')",
         ("admin", h),
     )
-    con.execute(
-        "INSERT INTO users (username, password_hash, role, lecturer_id) "
-        "SELECT 'bukasa', ?, 'lecturer', id FROM lecturers WHERE name = 'Bukasa'",
-        (h,),
-    )
-    con.execute(
-        "INSERT INTO users (username, password_hash, role, group_id) "
-        "SELECT 'student_bsc1', ?, 'student', id FROM student_groups WHERE name = 'BSC1-G1'",
-        (h,),
-    )
+    for username, lecturer_name in DEV_LECTURERS:
+        con.execute(
+            "INSERT INTO users (username, password_hash, role, lecturer_id) "
+            "SELECT ?, ?, 'lecturer', id FROM lecturers WHERE name = ?",
+            (username, h, lecturer_name),
+        )
+    for username, group_name in DEV_STUDENTS:
+        con.execute(
+            "INSERT INTO users (username, password_hash, role, group_id) "
+            "SELECT ?, ?, 'student', id FROM student_groups WHERE name = ?",
+            (username, h, group_name),
+        )
     con.commit()
-    print(f"  dev users created: admin, bukasa (lecturer), student_bsc1  [password: {DEV_PASSWORD}]")
+    names = ["admin"] + [u for u, _ in DEV_LECTURERS] + [u for u, _ in DEV_STUDENTS]
+    print(f"  dev users created: {', '.join(names)}  [password: {DEV_PASSWORD}]")
 
 
 def main() -> int:
